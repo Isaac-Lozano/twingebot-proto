@@ -90,6 +90,7 @@ class TwingeBot(twitchirc.TwitchIrc):
     def connect_regex(self, regex_str, func):
         if isinstance(func, str):
             func = string_func_helper(func)
+        # TODO: Allow regex flags for better regexes
         regex = re.compile(regex_str)
         self.regexes.append((regex, func))
 
@@ -103,13 +104,20 @@ def string_func_helper(string):
         return string
     return return_string
 
+# Custom stuff below
+
+def get_current_song(unused_irc_dict):
+    # Do some stuff here
+    song = 'There is no song currently playing.'
+    return song
+
 if __name__ == '__main__':
     # Create a new twingebot
     twingebot = TwingeBot('irc.twitch.tv', 6667, 'twingebot', 'OAUTH HERE')
     # Takes in a list (aka array). channel names should be lowercase and start with a '#'
     twingebot.set_channels(['#darktwinge'])
     # Second arguments can also be a function if wanted
-    twingebot.connect_command('sibg', 'There is no song currently playing.')
+    twingebot.connect_command('sibg', get_current_song)
     twingebot.connect_regex('so much for heroes', 'Something something so much for heroes.')
     # Timer is in seconds (Can be a decimal value)
     twingebot.connect_timer(10, "Follow Like Subscribe.")
