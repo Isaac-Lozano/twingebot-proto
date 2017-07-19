@@ -31,7 +31,10 @@ class TwitchIrc(object):
 
     async def process(self):
         while True:
-            self.buf += await self.reader.read(4096)
+            new_data = await self.reader.read(4096)
+            if not new_data:
+                return
+            self.buf += new_data
             while b'\r\n' in self.buf:
                 irc_line = self.buf.partition(b'\r\n')
                 await self.process_line(irc_line[0])
