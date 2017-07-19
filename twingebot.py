@@ -87,11 +87,11 @@ class TwingeBot(twitchirc.TwitchIrc):
             func = string_func_helper(func)
         self.commands[command] = func
 
-    def connect_regex(self, regex_str, func):
+    def connect_regex(self, regex_str, func, flags=0):
         if isinstance(func, str):
             func = string_func_helper(func)
         # TODO: Allow regex flags for better regexes
-        regex = re.compile(regex_str)
+        regex = re.compile(regex_str, flags)
         self.regexes.append((regex, func))
 
     def connect_timer(self, seconds, func):
