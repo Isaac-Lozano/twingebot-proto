@@ -2,6 +2,24 @@ import twitchirc
 import asyncio
 import re
 import traceback
+import time
+
+class Trigger(object):
+    def __init__(self, callback, cooldown=8):
+        self.callback = callback
+        self.cooldown = cooldown
+        self.last_triggered = 0
+
+    def trigger(self, *params):
+        current_time = time.time()
+        if self.last_triggered + self.cooldown > current_time:
+            # TODO: Perhaps a custom error type here.
+            return ""
+        self.last_triggered = current_time
+        return self.callback(*params)
+
+    def __call__(self, *params):
+        return self.trigger(*params)
 
 class TwingeBot(twitchirc.TwitchIrc):
     def __init__(self, host, port, nick, password, **params):
@@ -41,7 +59,8 @@ class TwingeBot(twitchirc.TwitchIrc):
                 try:
                     # Get the response to the trigger
                     response = func(irc_dict)
-                    self.send_privmsg(channel, response)
+                    if response:
+                        self.send_privmsg(channel, response)
                 except Exception as e:
                     # Don't die if the command had an exception.
                     # It should actually mostly be fine.
@@ -60,7 +79,8 @@ class TwingeBot(twitchirc.TwitchIrc):
         try:
             # Get the response to the command
             response = func(irc_dict)
-            self.send_privmsg(channel, response)
+            if response:
+                self.send_privmsg(channel, response)
         except Exception as e:
             # Don't die if the command had an exception.
             # It should actually mostly be fine.
@@ -75,8 +95,9 @@ class TwingeBot(twitchirc.TwitchIrc):
                 # Get the response to the trigger
                 response = func()
                 # Send response to all channels
-                for channel in self.channels:
-                    self.send_privmsg(channel, response)
+                if response:
+                    for channel in self.channels:
+                        self.send_privmsg(channel, response)
             except Exception as e:
                 # Don't die if the command had an exception.
                 # It should actually mostly be fine.
@@ -89,19 +110,19 @@ class TwingeBot(twitchirc.TwitchIrc):
     def connect_command(self, command, func):
         if isinstance(func, str):
             func = string_func_helper(func)
-        self.commands[command] = func
+        self.commands[command] = Trigger(func)
 
     def connect_regex(self, regex_str, func, flags=0):
         if isinstance(func, str):
             func = string_func_helper(func)
         # TODO: Allow regex flags for better regexes
         regex = re.compile(regex_str, flags)
-        self.regexes.append((regex, func))
+        self.regexes.append((regex, Trigger(func)))
 
     def connect_timer(self, seconds, func):
         if isinstance(func, str):
             func = string_func_helper(func)
-        asyncio.ensure_future(self.timer(seconds, func))
+        asyncio.ensure_future(self.timer(seconds, Trigger(func, 0)))
 
 def string_func_helper(string):
     def return_string(*params):
