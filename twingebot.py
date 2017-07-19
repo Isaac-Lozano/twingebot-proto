@@ -10,6 +10,10 @@ class TwingeBot(twitchirc.TwitchIrc):
         self.commands = dict()
         self.regexes = list()
 
+    def run(self):
+        super(TwingeBot, self).run()
+        print("Disconnected from chat.")
+
     async def on_welcome(self, irc_dict):
         print("connected to twitch IRC")
         # Join all channels
